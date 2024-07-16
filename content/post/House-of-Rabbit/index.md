@@ -5,12 +5,14 @@ slug: Welcome to Linux Heap Exploitation
 date: 2024-06-28 00:00:00+0000
 image: cover.jpg
 categories:
-    - Heap Lab
     - Heap
     - Exploit
+    - CTF
 tags:
-    - Heap
+    - pwnable
+    
 weight: 1       # You can add weight to some posts to override the default sorting (date descending)
+comments: false
 ---
 
 
@@ -513,7 +515,7 @@ io.interactive()
 
 ### shell.py
 
-```python=
+```python
 #!/usr/bin/env python3
 from pwn import *
 
