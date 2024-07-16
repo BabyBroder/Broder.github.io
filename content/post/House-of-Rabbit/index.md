@@ -178,7 +178,7 @@ Fortunately, there are a couple of solutions to this dilemma.
 
 ### target.py
 
-```python=
+```python
 #!/usr/bin/env python3
 from pwn import *
 
@@ -344,7 +344,7 @@ io.interactive()
 ### shell.py
 
 
-```python=
+```python
 #!/usr/bin/env python3
 from pwn import *
 
