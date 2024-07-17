@@ -1,7 +1,7 @@
 ---
-title: Test Category
+title: Hello
 description: A description of this category
-image:
+image: 
 
 # Badge style
 style:
