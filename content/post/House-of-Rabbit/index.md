@@ -1,13 +1,13 @@
 ---
 title: The House of Rabbit
 description: House of rabbit is a technique for counterfeiting piles that was introduced as early as 2017 but only appeared in the CTF competition in the last two months. We generally use it in the fastbin attack, because other bins such as unsorted bin have better utilization 
-slug: Welcome to Linux Heap Exploitation
 date: 2024-06-28 00:00:00+0000
 image: cover.jpg
 categories:
     - Heap
     - Exploit
     - CTF
+    - Linux Heap Exploitation - Part 2 
 tags:
     - pwnable
     
